@@ -1,15 +1,10 @@
 package controllers;
 
 import io.javalin.Javalin;
-
+import io.javalin.http.BadRequestResponse;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
-
-import com.google.gson.*;
-import io.javalin.http.*;
 import models.Message;
 import models.Move;
 import org.eclipse.jetty.websocket.api.Session;

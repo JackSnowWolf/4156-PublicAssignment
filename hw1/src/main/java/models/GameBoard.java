@@ -51,6 +51,8 @@ public class GameBoard {
   }
 
   /**
+   * get json of game board.
+   *
    * @return return game board in json
    */
   public String toJson() {
@@ -60,7 +62,7 @@ public class GameBoard {
 
 
   /**
-   * getPlayer
+   * getPlayer.
    *
    * @param id player id.
    * @return corresponding player.
@@ -76,16 +78,24 @@ public class GameBoard {
     }
   }
 
-
+  /**
+   * get player id.
+   *
+   * @param type player type.
+   * @return corresponding player id.
+   */
   public int getPlayerId(char type) {
-    if (type == p1.getType()) return 1;
-    else if (type == p2.getType()) return 2;
-    else
+    if (type == p1.getType()) {
+      return 1;
+    } else if (type == p2.getType()) {
+      return 2;
+    } else {
       throw new IllegalArgumentException(String.format("Invalid player type '%c'!", type));
+    }
   }
 
   /**
-   * player makes a move
+   * player makes a move.
    *
    * @param move player that makes this move.
    */
@@ -113,17 +123,21 @@ public class GameBoard {
   }
 
   /**
-   * check winner
+   * check winner.
    */
   private void checkWinner() {
     for (int i = 0; i < 3; i++) {
       if (boardState[i][0] == boardState[i][1] && boardState[i][0] == boardState[i][2]) {
-        if (boardState[i][0] == 0) continue;
+        if (boardState[i][0] == 0) {
+          continue;
+        }
         winner = getPlayerId(boardState[i][0]);
         return;
       }
       if (boardState[0][i] == boardState[1][i] && boardState[0][i] == boardState[2][i]) {
-        if (boardState[0][i] == 0) continue;
+        if (boardState[0][i] == 0) {
+          continue;
+        }
         winner = getPlayerId(boardState[0][i]);
         return;
       }
@@ -149,7 +163,9 @@ public class GameBoard {
         }
       }
     }
-    if (filledNum == 9) isDraw = true;
+    if (filledNum == 9) {
+      isDraw = true;
+    }
   }
 
 }

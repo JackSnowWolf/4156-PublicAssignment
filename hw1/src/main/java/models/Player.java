@@ -20,6 +20,10 @@ public class Player {
     return type;
   }
 
+  /**
+   * get oppent player type.
+   * @return oppent player type in char.
+   */
   public char oppent() {
     switch (type) {
       case 'X':

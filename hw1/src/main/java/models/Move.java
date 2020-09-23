@@ -10,7 +10,7 @@ public class Move {
 
 
   /**
-   * Move constructor
+   * Move constructor.
    *
    * @param player player type
    * @param moveX  move x position
