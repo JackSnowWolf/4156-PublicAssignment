@@ -1,8 +1,17 @@
 package controllers;
 
 import io.javalin.Javalin;
+
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
+
+import com.google.gson.*;
+import io.javalin.http.*;
+import models.Message;
+import models.Move;
 import org.eclipse.jetty.websocket.api.Session;
 
 class PlayGame {
@@ -11,45 +20,110 @@ class PlayGame {
 
   private static Javalin app;
 
-  /** Main method of the application.
+  private static models.GameBoard gameBoard;
+
+
+  /**
+   * Main method of the application.
+   *
    * @param args Command line arguments
    */
   public static void main(final String[] args) {
 
     app = Javalin.create(config -> {
       config.addStaticFiles("/public");
+      config.wsLogger(ws -> {
+        ws.onMessage(ctx -> {
+          System.out.println("Received: " + ctx.message());
+        });
+      });
     }).start(PORT_NUMBER);
+
+
+    // Hello Server
+    app.get("/hello", ctx -> {
+      ctx.result("Hello World!");
+    });
 
     // Test Echo Server
     app.post("/echo", ctx -> {
       ctx.result(ctx.body());
     });
 
-    /**
-     * Please add your end points here.
-     * 
-     * 
-     * 
-     * 
-     * Please add your end points here.
-     * 
-     * 
-     * 
-     * 
-     * Please add your end points here.
-     * 
-     * 
-     * 
-     * 
-     * Please add your end points here.
-     * 
-     */
+    // tic-tac-toe html
+    app.get("tictacto.html", ctx -> {
+      ctx.render("/public/tictactoe.html");
+    });
+
+    // New Game
+    app.get("/newgame", ctx -> {
+      gameBoard = new models.GameBoard();
+      ctx.redirect("/tictactoe.html");
+    });
+
+    // Start Game
+    app.post("/startgame", ctx -> {
+      try {
+
+        char type = Objects.requireNonNull(ctx.formParam("type")).charAt(0);
+
+        if (type != 'X' && type != 'O') {
+          throw new BadRequestResponse(String.format("type '%c' is not supported", type));
+        }
+
+        Objects.requireNonNull(gameBoard);
+        gameBoard.startGame(type);
+        sendGameBoardToAllPlayers(gameBoard.toJson());
+        ctx.result(gameBoard.toJson());
+      } catch (NullPointerException e) {
+        throw new BadRequestResponse("Game is not initialized!");
+      }
+    });
+
+    // Join Game
+    app.get("/joingame", ctx -> {
+      try {
+        Objects.requireNonNull(gameBoard);
+        gameBoard.joinGame();
+        sendGameBoardToAllPlayers(gameBoard.toJson());
+        ctx.redirect("tictactoe.html?p=2");
+      } catch (NullPointerException e) {
+        throw new BadRequestResponse("Game is not initialized!");
+      }
+
+    });
+
+    // Takes a Move
+    app.post("/move/:playId", ctx -> {
+      try {
+        Objects.requireNonNull(gameBoard);
+        int playId = ctx.pathParam("playId", int.class).get();
+        int moveX = ctx.formParam("x", int.class).get();
+        int moveY = ctx.formParam("y", int.class).get();
+        Move move = new Move(gameBoard.getPlayer(playId), moveX, moveY);
+        Message message = gameBoard.move(move);
+        ctx.result(message.toJson());
+        sendGameBoardToAllPlayers(gameBoard.toJson());
+      } catch (NullPointerException e) {
+        throw new BadRequestResponse("Game is not initialized!");
+      }
+    });
+
+    app.exception(BadRequestResponse.class, (e, ctx) -> {
+      ctx.status(400);
+    }).error(400, ctx -> {
+      ctx.result("BadRequestResponse");
+    });
+
 
     // Web sockets - DO NOT DELETE or CHANGE
     app.ws("/gameboard", new UiWebSocket());
+
   }
 
-  /** Send message to all players.
+  /**
+   * Send message to all players.
+   *
    * @param gameBoardJson Gameboard JSON
    * @throws IOException Websocket message send IO Exception
    */
