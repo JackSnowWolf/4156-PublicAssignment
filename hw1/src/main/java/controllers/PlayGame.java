@@ -16,7 +16,7 @@ class PlayGame {
 
   private static Javalin app;
 
-  private static models.GameBoard gameBoard;
+  private static GameBoard gameBoard;
 
 
   /**
