@@ -22,14 +22,56 @@ public class Move {
     this.moveY = moveY;
   }
 
+  /**
+   * Set player.
+   *
+   * @param player game player.
+   */
+  public void setPlayer(Player player) {
+    this.player = player;
+  }
+
+  /**
+   * Get player.
+   *
+   * @return game player.
+   */
   public Player getPlayer() {
     return player;
   }
 
+  /**
+   * Set moveX.
+   *
+   * @param moveX move x position.
+   */
+  public void setMoveX(int moveX) {
+    this.moveX = moveX;
+  }
+
+  /**
+   * Set moveY.
+   *
+   * @param moveY move y position.
+   */
+  public void setMoveY(int moveY) {
+    this.moveY = moveY;
+  }
+
+  /**
+   * Get moveX.
+   *
+   * @return move x position.
+   */
   public int getMoveX() {
     return moveX;
   }
 
+  /**
+   * Get moveY.
+   *
+   * @return move y position.
+   */
   public int getMoveY() {
     return moveY;
   }

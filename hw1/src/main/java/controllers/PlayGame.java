@@ -5,6 +5,7 @@ import io.javalin.http.BadRequestResponse;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Queue;
+import models.GameBoard;
 import models.Message;
 import models.Move;
 import org.eclipse.jetty.websocket.api.Session;
@@ -104,6 +105,7 @@ class PlayGame {
       }
     });
 
+    // Exception handler.
     app.exception(BadRequestResponse.class, (e, ctx) -> {
       ctx.status(400);
     }).error(400, ctx -> {
@@ -135,5 +137,50 @@ class PlayGame {
 
   public static void stop() {
     app.stop();
+  }
+
+  /**
+   * Get port number.
+   *
+   * @return port number.
+   */
+  public static int getPortNumber() {
+    return PORT_NUMBER;
+  }
+
+  /**
+   * Set app.
+   *
+   * @param app Javalin app.
+   */
+  public static void setApp(Javalin app) {
+    PlayGame.app = app;
+  }
+
+  /**
+   * Get app.
+   *
+   * @return Javalin app.
+   */
+  public static Javalin getApp() {
+    return app;
+  }
+
+  /**
+   * Set gameboard.
+   *
+   * @param gameBoard game board class.
+   */
+  public static void setGameBoard(GameBoard gameBoard) {
+    PlayGame.gameBoard = gameBoard;
+  }
+
+  /**
+   * Get gameboard.
+   *
+   * @return game board.
+   */
+  public static GameBoard getGameBoard() {
+    return gameBoard;
   }
 }

@@ -33,6 +33,136 @@ public class GameBoard {
   }
 
   /**
+   * Set p1.
+   *
+   * @param p1 player 1.
+   */
+  public void setP1(Player p1) {
+    this.p1 = p1;
+  }
+
+
+  /**
+   * Set p2.
+   *
+   * @param p2 player 2.
+   */
+  public void setP2(Player p2) {
+    this.p2 = p2;
+  }
+
+
+  /**
+   * Get p1.
+   *
+   * @return player 1.
+   */
+  public Player getP1() {
+    return p1;
+  }
+
+  /**
+   * Get p2.
+   *
+   * @return player 2.
+   */
+  public Player getP2() {
+    return p2;
+  }
+
+  /**
+   * Set gameStarted.
+   *
+   * @param gameStarted whether game is started.
+   */
+  public void setGameStarted(boolean gameStarted) {
+    this.gameStarted = gameStarted;
+  }
+
+
+  /**
+   * if game is started.
+   *
+   * @return whether game is started.
+   */
+  public boolean isGameStarted() {
+    return gameStarted;
+  }
+
+  /**
+   * Set turn.
+   *
+   * @param turn which player's turn.
+   */
+  public void setTurn(int turn) {
+    this.turn = turn;
+  }
+
+  /**
+   * Get Turn.
+   *
+   * @return which player's turn.
+   */
+  public int getTurn() {
+    return turn;
+  }
+
+  /**
+   * Set boardState.
+   *
+   * @param boardState game board states.
+   */
+  public void setBoardState(char[][] boardState) {
+    this.boardState = boardState;
+  }
+
+  /**
+   * Get board state.
+   *
+   * @return game board states.
+   */
+  public char[][] getBoardState() {
+    return boardState;
+  }
+
+  /**
+   * Set winner.
+   *
+   * @param winner game winner.
+   */
+  public void setWinner(int winner) {
+    this.winner = winner;
+  }
+
+  /**
+   * Get winner.
+   *
+   * @return game winner.
+   */
+  public int getWinner() {
+    return winner;
+  }
+
+  /**
+   * Set draw.
+   *
+   * @param draw whether game is draw.
+   */
+  public void setDraw(boolean draw) {
+    isDraw = draw;
+  }
+
+  /**
+   * if game is draw.
+   *
+   * @return whether game is draw.
+   */
+  public boolean isDraw() {
+    return isDraw;
+  }
+
+
+  /**
    * p1 start game.
    *
    * @param type "X" or "O" selected by player p1.
@@ -123,7 +253,7 @@ public class GameBoard {
   }
 
   /**
-   * check winner.
+   * check winner and set winner or isDraw.
    */
   private void checkWinner() {
     for (int i = 0; i < 3; i++) {
