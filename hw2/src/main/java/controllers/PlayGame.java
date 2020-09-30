@@ -46,7 +46,7 @@ class PlayGame {
     });
 
     // tic-tac-toe html
-    app.get("tictacto.html", ctx -> {
+    app.get("/tictactoe.html", ctx -> {
       ctx.render("/public/tictactoe.html");
     });
 
@@ -102,6 +102,11 @@ class PlayGame {
       } catch (NullPointerException e) {
         throw new BadRequestResponse("Game is not initialized!");
       }
+    });
+
+    // Root Url
+    app.get("/", ctx -> {
+      ctx.result("Hello World!");
     });
 
     // Exception handler.

@@ -14,6 +14,9 @@ public class Player {
    * @param id player id.
    */
   Player(char type, int id) {
+    if (!(type == 'X' || type == 'O')) {
+      throw new IllegalArgumentException("type should be 'O' or 'X'");
+    }
     this.type = type;
     this.id = id;
   }
@@ -63,10 +66,8 @@ public class Player {
     switch (type) {
       case 'X':
         return 'O';
-      case 'O':
-        return 'X';
       default:
-        throw new IllegalArgumentException("type should be 'O' or 'X'");
+        return 'X';
     }
   }
 

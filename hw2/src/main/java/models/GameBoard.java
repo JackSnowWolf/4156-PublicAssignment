@@ -113,7 +113,7 @@ public class GameBoard {
    * @param boardState game board states.
    */
   public void setBoardState(char[][] boardState) {
-    this.boardState = boardState;
+    this.boardState = boardState.clone();
   }
 
   /**
@@ -122,7 +122,7 @@ public class GameBoard {
    * @return game board states.
    */
   public char[][] getBoardState() {
-    return boardState;
+    return boardState.clone();
   }
 
   /**
@@ -169,7 +169,6 @@ public class GameBoard {
    */
   public void startGame(char type) {
     p1 = new Player(type, 1);
-    turn = 1;
   }
 
   /**
@@ -178,6 +177,7 @@ public class GameBoard {
   public void joinGame() {
     p2 = new Player(p1.oppent(), 2);
     gameStarted = true;
+    turn = 1;
   }
 
   /**
@@ -230,9 +230,13 @@ public class GameBoard {
    * @param move player that makes this move.
    */
   public Message move(Move move) {
+
+    if (move.getPlayer() == null) {
+      return new Message(false, 400, "Player is not initialized.");
+    }
     int playId = move.getPlayer().getId();
-    int x = move.getMoveX();
-    int y = move.getMoveY();
+    final int x = move.getMoveX();
+    final int y = move.getMoveY();
 
     if (!gameStarted) {
       return new Message(false, 400, "Game is not started, please start game first.");
@@ -240,7 +244,10 @@ public class GameBoard {
     if (playId != turn) {
       return new Message(false, 400, String.format("It's not Player %d's turn.", playId));
     }
-    if (x < 0 || x > 3 || y < 0 || y > 3) {
+    if (winner == 1 || winner == 2 || isDraw) {
+      return new Message(false, 400, "Game is finished");
+    }
+    if (x < 0 || x >= 3 || y < 0 || y >= 3) {
       return new Message(false, 400, "Selected position overflow!");
     }
     if (boardState[x][y] != 0) {
@@ -249,7 +256,7 @@ public class GameBoard {
     boardState[x][y] = move.getPlayer().getType();
     turn = turn == 1 ? 2 : 1;
     checkWinner();
-    return new Message(false, 100, "");
+    return new Message(true, 100, "");
   }
 
   /**

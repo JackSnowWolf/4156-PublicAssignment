@@ -13,8 +13,8 @@ public class Move {
    * Move constructor.
    *
    * @param player player type
-   * @param moveX  move x position
-   * @param moveY  move y position
+   * @param moveX move x position
+   * @param moveY move y position
    */
   public Move(Player player, int moveX, int moveY) {
     this.player = player;
