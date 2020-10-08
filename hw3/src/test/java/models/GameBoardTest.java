@@ -30,6 +30,7 @@ public class GameBoardTest {
 
 
   @Nested
+  @TestMethodOrder(OrderAnnotation.class)
   @DisplayName("Before player 1 start game tests")
   class BeforeStartGameTests {
 
@@ -79,6 +80,7 @@ public class GameBoardTest {
   }
 
   @Nested
+  @TestMethodOrder(OrderAnnotation.class)
   @DisplayName("Before game starts tests")
   class BeforeJoinGameTests {
 
@@ -123,6 +125,7 @@ public class GameBoardTest {
   }
 
   @Nested
+  @TestMethodOrder(OrderAnnotation.class)
   @DisplayName("After game started tests")
   class AfterGameStartedTests {
 

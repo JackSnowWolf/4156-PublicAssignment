@@ -3,10 +3,13 @@ package controllers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.Gson;
+import java.sql.Connection;
+import java.sql.SQLException;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
@@ -28,6 +31,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 @TestMethodOrder(OrderAnnotation.class)
 public class GameTest {
 
+
   /**
    * Runs only once before the testing starts.
    */
@@ -35,6 +39,7 @@ public class GameTest {
   public static void init() {
     // Start Server
     PlayGame.main(null);
+
     System.out.println("Before All");
   }
 
@@ -65,6 +70,21 @@ public class GameTest {
 
     // Check assert statement (New Game has started)
     assertEquals(restStatus, 200);
+
+    // database should be cleaned.
+    PlayGame.setGameBoard(null);
+
+    Unirest.get("http://localhost:8080/tictactoe.html").asString();
+
+    char[][] boardState = PlayGame.getGameBoard().getBoardState();
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        assertEquals('\0', boardState[i][j]);
+      }
+    }
+    assertNull(PlayGame.getGameBoard().getP1());
+    assertNull(PlayGame.getGameBoard().getP2());
+
     System.out.println("Test New Game");
   }
 
@@ -145,6 +165,7 @@ public class GameTest {
 
 
   @Nested
+  @TestMethodOrder(OrderAnnotation.class)
   @DisplayName("Before New Game Tests")
   class BeforeNewGameTests {
 
@@ -153,6 +174,7 @@ public class GameTest {
     @Order(1)
     public void beforeNewGameTest() {
       // Check game board before initialized.
+      Unirest.get("http://localhost:8080/newgame").asString();
       PlayGame.setGameBoard(null);
       assertNull(PlayGame.getGameBoard());
 
@@ -164,20 +186,44 @@ public class GameTest {
      */
     @Test
     @Order(2)
-    public void startGameErrorTest() {
+    public void startGameTest() {
 
       // Create a POST request to make a move and get body.
       HttpResponse response = Unirest.post("http://localhost:8080/startgame").body("type=X")
           .asString();
-      // Game is not initialized.
+      // Game is not initialized. But the endpoint will reload game from database.
+      assertEquals(200, response.getStatus());
+      String responseBody = (String) response.getBody();
+      assertTrue(response.isSuccess());
+      assertNotEquals("", responseBody);
+
+      System.out.println("Test Start Game ");
+    }
+
+    /**
+     * This is a test case to evaluate the startgame endpoint for reloading db.
+     */
+    @Test
+    @Order(2)
+    public void startGameErrorTest() {
+
+      // save to database.
+      Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+      Unirest.get("http://localhost:8080/joingame").asString();
+      // game crashes.
+      PlayGame.setGameBoard(null);
+
+      // Create a POST request to make a move and get body.
+      HttpResponse response = Unirest.post("http://localhost:8080/startgame").body("type=X")
+          .asString();
+      // Game is not initialized. But the endpoint will reload game from database.
       assertEquals(400, response.getStatus());
       String responseBody = (String) response.getBody();
       assertFalse(response.isSuccess());
       assertEquals("BadRequestResponse", responseBody);
 
-      System.out.println("Test Start Game Error");
+      System.out.println("Test Start Game Error When reloading");
     }
-
 
     /**
      * This is a test case to evaluate the joingame endpoint.
@@ -207,20 +253,39 @@ public class GameTest {
       HttpResponse response = Unirest.post("http://localhost:8080/move/1").body("x=0&y=0")
           .asString();
       // Game is not initialized.
-      assertEquals(400, response.getStatus());
+      assertEquals(200, response.getStatus());
       String responseBody = (String) response.getBody();
-      assertFalse(response.isSuccess());
-      assertEquals("BadRequestResponse", responseBody);
+      assertTrue(response.isSuccess());
+
+      // --------------------------- JSONObject Parsing ----------------------------------
+
+      System.out.println("Move Response: " + responseBody);
+
+      // Parse the response to JSON object
+      JSONObject jsonObject = new JSONObject(responseBody);
+
+      // Check if game started after player 1 joins: Game should not start at this point
+      assertEquals(false, jsonObject.get("moveValidity"));
+      assertNotEquals(100, jsonObject.get("code"));
 
       // Create a GET request for player 2 to make a move.
       response = Unirest.post("http://localhost:8080/move/2").body("x=0&y=0")
           .asString();
       // Game is not initialized.
-      assertEquals(400, response.getStatus());
+      assertEquals(200, response.getStatus());
       responseBody = (String) response.getBody();
-      assertFalse(response.isSuccess());
-      assertEquals("BadRequestResponse", responseBody);
+      assertTrue(response.isSuccess());
 
+      // --------------------------- JSONObject Parsing ----------------------------------
+
+      System.out.println("Move Response: " + responseBody);
+
+      // Parse the response to JSON object
+      jsonObject = new JSONObject(responseBody);
+
+      // Check if game started after player 1 joins: Game should not start at this point
+      assertEquals(false, jsonObject.get("moveValidity"));
+      assertNotEquals(100, jsonObject.get("code"));
       System.out.println("Test Move Before Join Error.");
     }
 
@@ -228,6 +293,7 @@ public class GameTest {
   }
 
   @Nested
+  @TestMethodOrder(OrderAnnotation.class)
   @DisplayName("Start Game Tests")
   class StartGameTests {
 
@@ -390,9 +456,27 @@ public class GameTest {
 
       System.out.println("Test Start Game Invalid Type Error.");
     }
+
+    @Test
+    @Order(4)
+    public void restoreAfterNewGame() {
+      // game crashes.
+      PlayGame.setGameBoard(null);
+      Unirest.get("http://localhost:8080/tictactoe.html").asString();
+
+      // restore after new game.
+      assertNull(PlayGame.getGameBoard().getP1());
+      assertNull(PlayGame.getGameBoard().getP2());
+      assertFalse(PlayGame.getGameBoard().isGameStarted());
+      assertEquals(0, PlayGame.getGameBoard().getTurn());
+      assertFalse(PlayGame.getGameBoard().isDraw());
+      assertEquals(0, PlayGame.getGameBoard().getWinner());
+      System.out.println("Test Restore after new game.");
+    }
   }
 
   @Nested
+  @TestMethodOrder(OrderAnnotation.class)
   @DisplayName("Join Game Test")
   class JoinGameTests {
 
@@ -475,9 +559,8 @@ public class GameTest {
     @Test
     @Order(2)
     public void joinGameTest() {
-      // Create a POST request to startgame endpoint and get the body
-      Unirest.get("http://localhost:8080/joingame")
-          .asString();
+      // Create a GET request to startgame endpoint and get the body
+      Unirest.get("http://localhost:8080/joingame").asString();
 
       // Player 1 can make a move after player 2 joined.
       // Create a GET request for player 1 to make a move.
@@ -500,9 +583,44 @@ public class GameTest {
       System.out.println("Test Player 2 Join game successfully.");
     }
 
+    @Test
+    @Order(3)
+    void restoreAfterStartGame() {
+
+      // game crashes.
+      PlayGame.setGameBoard(null);
+      Unirest.get("http://localhost:8080/tictactoe.html").asString();
+
+      // player 1 should be restored.
+      assertNotNull(PlayGame.getGameBoard().getP1());
+      assertFalse(PlayGame.getGameBoard().isGameStarted());
+      // Create a GET request to startgame endpoint and get the body
+      Unirest.get("http://localhost:8080/joingame").asString();
+
+      // Player 1 can make a move after player 2 joined.
+      // Create a GET request for player 1 to make a move.
+      HttpResponse response = Unirest.post("http://localhost:8080/move/1").body("x=0&y=0")
+          .asString();
+      String responseBody = (String) response.getBody();
+
+      // --------------------------- JSONObject Parsing ----------------------------------
+
+      System.out.println("Move Response: " + responseBody);
+
+      // Parse the response to JSON object
+      JSONObject jsonObject = new JSONObject(responseBody);
+
+      // Check if game started after player 1 joins: Game should not start at this point
+      assertEquals(true, jsonObject.get("moveValidity"));
+      assertEquals(100, jsonObject.get("code"));
+
+      assertTrue(PlayGame.getGameBoard().isGameStarted());
+      System.out.println("Test Restore after player 1 started game.");
+    }
   }
 
   @Nested
+  @TestMethodOrder(OrderAnnotation.class)
   @DisplayName("After Game Started Tests")
   class AfterGameStartedTests {
 
@@ -680,7 +798,7 @@ public class GameTest {
     @Test
     @Order(6)
     public void player1WinTest() {
-      // Create a GET request for player 1 to make a move
+      // Create a POST request for player 1 to make a move
       Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
       // Player 1 and player 2 make moves one by one.
       Unirest.post("http://localhost:8080/move/2").body("x=1&y=1").asString();
@@ -695,7 +813,7 @@ public class GameTest {
     @Test
     @Order(7)
     public void player2WinTest() {
-      // Create a GET request for player 1 to make a move
+      // Create a POST request for player 1 to make a move
       Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
       // Player 1 and player 2 make moves one by one.
       Unirest.post("http://localhost:8080/move/2").body("x=1&y=1").asString();
@@ -755,6 +873,167 @@ public class GameTest {
       // Check error message.
       assertNotEquals("", jsonObject.get("message"));
       System.out.println("Test move after game finished error.");
+    }
+
+    @Test
+    @Order(10)
+    public void moveRestoreTest() {
+      // Create a POST request for player 1 to make a move.
+      Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+      // Player 2 make move in his turn.
+      Unirest.post("http://localhost:8080/move/2").body("x=1&y=0").asString();
+      // game crashes.
+      PlayGame.setGameBoard(null);
+
+      HttpResponse response = Unirest.post("http://localhost:8080/move/1").body("x=1&y=1")
+          .asString();
+      String responseBody = (String) response.getBody();
+
+      // --------------------------- JSONObject Parsing ----------------------------------
+
+      System.out.println("Move Response: " + responseBody);
+
+      // Parse the response to JSON object
+      JSONObject jsonObject = new JSONObject(responseBody);
+
+      // Check if game started after player 1 joins: Game should not start at this point
+      assertEquals(true, jsonObject.get("moveValidity"));
+      assertEquals(100, jsonObject.get("code"));
+
+      // check board state.
+      assertTrue(PlayGame.getGameBoard().isGameStarted());
+      assertEquals('X', PlayGame.getGameBoard().getP1().getType());
+      assertEquals('O', PlayGame.getGameBoard().getP2().getType());
+
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[0][0]);
+      assertEquals('O', PlayGame.getGameBoard().getBoardState()[1][0]);
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[1][1]);
+
+      System.out.println("Test Restore Move.");
+    }
+
+    @Test
+    @Order(11)
+    public void restoreAfterDrawTest() {
+      // Create a POST request for player 1 to make a move
+      Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+      // Player 1 and player 2 make moves one by one.
+      Unirest.post("http://localhost:8080/move/2").body("x=0&y=1").asString();
+      Unirest.post("http://localhost:8080/move/1").body("x=0&y=2").asString();
+      Unirest.post("http://localhost:8080/move/2").body("x=1&y=0").asString();
+      Unirest.post("http://localhost:8080/move/1").body("x=1&y=1").asString();
+      Unirest.post("http://localhost:8080/move/2").body("x=2&y=0").asString();
+      Unirest.post("http://localhost:8080/move/1").body("x=1&y=2").asString();
+      Unirest.post("http://localhost:8080/move/2").body("x=2&y=2").asString();
+      Unirest.post("http://localhost:8080/move/1").body("x=2&y=1").asString();
+
+      // game crashes.
+      PlayGame.setGameBoard(null);
+
+      Unirest.get("http://localhost:8080/tictactoe.html").asString();
+
+      assertTrue(PlayGame.getGameBoard().isGameStarted());
+      assertTrue(PlayGame.getGameBoard().isDraw());
+
+      assertEquals('X', PlayGame.getGameBoard().getP1().getType());
+      assertEquals('O', PlayGame.getGameBoard().getP2().getType());
+
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[0][0]);
+      assertEquals('O', PlayGame.getGameBoard().getBoardState()[0][1]);
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[0][2]);
+      assertEquals('O', PlayGame.getGameBoard().getBoardState()[1][0]);
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[1][1]);
+      assertEquals('O', PlayGame.getGameBoard().getBoardState()[2][0]);
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[1][2]);
+      assertEquals('O', PlayGame.getGameBoard().getBoardState()[2][2]);
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[2][1]);
+
+      System.out.println("Test Restore after draw.");
+    }
+
+
+    @Test
+    @Order(12)
+    public void restoreAfterWin() {
+      // Create a POST request for player 1 to make a move
+      Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+      // Player 1 and player 2 make moves one by one.
+      Unirest.post("http://localhost:8080/move/2").body("x=1&y=1").asString();
+      Unirest.post("http://localhost:8080/move/1").body("x=0&y=1").asString();
+      Unirest.post("http://localhost:8080/move/2").body("x=1&y=2").asString();
+      Unirest.post("http://localhost:8080/move/1").body("x=0&y=2").asString();
+
+      // game crashes.
+      PlayGame.setGameBoard(null);
+
+      Unirest.get("http://localhost:8080/tictactoe.html").asString();
+
+      assertTrue(PlayGame.getGameBoard().isGameStarted());
+      assertFalse(PlayGame.getGameBoard().isDraw());
+      assertEquals(1, PlayGame.getGameBoard().getWinner());
+
+      assertEquals('X', PlayGame.getGameBoard().getP1().getType());
+      assertEquals('O', PlayGame.getGameBoard().getP2().getType());
+
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[0][0]);
+      assertEquals('O', PlayGame.getGameBoard().getBoardState()[1][1]);
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[0][1]);
+      assertEquals('O', PlayGame.getGameBoard().getBoardState()[1][2]);
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[0][2]);
+
+      System.out.println("Test Restore after win.");
+    }
+
+    @Test
+    @Order(13)
+    public void restoreAfterGameStarted() {
+      // game crashes.
+      PlayGame.setGameBoard(null);
+
+      Unirest.get("http://localhost:8080/tictactoe.html").asString();
+
+      // player 1 and player 2 should be restored.
+      assertNotNull(PlayGame.getGameBoard().getP1());
+      assertNotNull(PlayGame.getGameBoard().getP2());
+      assertEquals('X', PlayGame.getGameBoard().getP1().getType());
+      assertEquals('O', PlayGame.getGameBoard().getP2().getType());
+      assertTrue(PlayGame.getGameBoard().isGameStarted());
+      assertEquals(1, PlayGame.getGameBoard().getTurn());
+      assertFalse(PlayGame.getGameBoard().isDraw());
+      assertEquals(0, PlayGame.getGameBoard().getWinner());
+
+      System.out.println("Test Restore after player 1 and player 2 both joined.");
+
+    }
+
+    @Test
+    @Order(13)
+    public void restoreAfterInvalidMove() {
+
+      // Create a POST request for player 1 to make a move.
+      Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+      // Player 2 make move at used position in his turn.
+      Unirest.post("http://localhost:8080/move/2").body("x=0&y=0").asString();
+
+      // game crashes.
+      PlayGame.setGameBoard(null);
+
+      Unirest.get("http://localhost:8080/tictactoe.html").asString();
+
+      // player 1 and player 2 should be restored.
+      assertNotNull(PlayGame.getGameBoard().getP1());
+      assertNotNull(PlayGame.getGameBoard().getP2());
+      assertEquals('X', PlayGame.getGameBoard().getP1().getType());
+      assertEquals('O', PlayGame.getGameBoard().getP2().getType());
+      assertTrue(PlayGame.getGameBoard().isGameStarted());
+      assertEquals(2, PlayGame.getGameBoard().getTurn());
+      assertFalse(PlayGame.getGameBoard().isDraw());
+      assertEquals(0, PlayGame.getGameBoard().getWinner());
+
+      assertEquals('X', PlayGame.getGameBoard().getBoardState()[0][0]);
+
+      System.out.println("Test Restore after invalid move");
+
     }
   }
 

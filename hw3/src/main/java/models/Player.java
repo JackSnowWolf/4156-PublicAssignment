@@ -13,7 +13,7 @@ public class Player {
    * @param type 'X' or 'O' selected by player.
    * @param id player id.
    */
-  Player(char type, int id) {
+  public Player(char type, int id) {
     if (!(type == 'X' || type == 'O')) {
       throw new IllegalArgumentException("type should be 'O' or 'X'");
     }

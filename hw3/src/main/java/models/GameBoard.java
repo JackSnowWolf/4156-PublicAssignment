@@ -1,7 +1,9 @@
 package models;
 
-
 import com.google.gson.Gson;
+import java.sql.Connection;
+import java.sql.SQLException;
+import utils.DatabaseJDBC;
 
 
 public class GameBoard {
@@ -30,6 +32,19 @@ public class GameBoard {
     turn = 0;
     isDraw = false;
     boardState = new char[3][3];
+
+    // connect to database.
+    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Connection conn = jdbc.createConnection();
+    // initialize database.
+    jdbc.createPlayerTable(conn, "ASE_I3_PLAYER");
+    jdbc.createMoveTable(conn, "ASE_I3_MOVE");
+    try {
+      conn.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
   }
 
   /**
@@ -39,6 +54,16 @@ public class GameBoard {
    */
   public void setP1(Player p1) {
     this.p1 = p1;
+
+    // save to database.
+    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Connection conn = jdbc.createConnection();
+    jdbc.addPlayerData(conn, p1);
+    try {
+      conn.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
   }
 
 
@@ -49,6 +74,16 @@ public class GameBoard {
    */
   public void setP2(Player p2) {
     this.p2 = p2;
+
+    // save to database.
+    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Connection conn = jdbc.createConnection();
+    jdbc.addPlayerData(conn, p2);
+    try {
+      conn.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
   }
 
 
@@ -168,7 +203,20 @@ public class GameBoard {
    * @param type "X" or "O" selected by player p1.
    */
   public void startGame(char type) {
+    if (isGameStarted()) {
+      throw new IllegalArgumentException("Game has already started.");
+    }
     p1 = new Player(type, 1);
+
+    // save to database.
+    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Connection conn = jdbc.createConnection();
+    jdbc.addPlayerData(conn, p1);
+    try {
+      conn.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -178,6 +226,16 @@ public class GameBoard {
     p2 = new Player(p1.oppent(), 2);
     gameStarted = true;
     turn = 1;
+
+    // save to database.
+    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Connection conn = jdbc.createConnection();
+    jdbc.addPlayerData(conn, p2);
+    try {
+      conn.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -256,6 +314,16 @@ public class GameBoard {
     boardState[x][y] = move.getPlayer().getType();
     turn = turn == 1 ? 2 : 1;
     checkWinner();
+
+    // save to database.
+    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Connection conn = jdbc.createConnection();
+    jdbc.addMoveData(conn, move);
+    try {
+      conn.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
     return new Message(true, 100, "");
   }
 
@@ -305,6 +373,67 @@ public class GameBoard {
     }
   }
 
+  /**
+   * reload game board from database.
+   */
+  public void reload() {
+    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Connection conn = jdbc.createConnection();
+    p1 = jdbc.loadPlayer1(conn);
+    p2 = jdbc.loadPlayer2(conn);
+    int[][] boardState = jdbc.loadBoardState(conn);
+
+    int p1Steps = 0;
+    int p2Steps = 0;
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if (boardState[i][j] == 0) {
+          this.boardState[i][j] = '\0';
+        } else {
+          if (boardState[i][j] == 1) {
+            p1Steps++;
+          } else {
+            p2Steps++;
+          }
+          this.boardState[i][j] = getPlayer(boardState[i][j]).getType();
+        }
+      }
+    }
+    // set game started and turn.
+    if (p1 != null && p2 != null) {
+      setGameStarted(true);
+      if (p1Steps == p2Steps) {
+        setTurn(1);
+      } else {
+        setTurn(2);
+      }
+    }
+    // check winner.
+    checkWinner();
+
+    try {
+      conn.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * clean database.
+   */
+  public void clean() {
+    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Connection conn = jdbc.createConnection();
+    // clean data.
+    jdbc.deleteTable(conn, "ASE_I3_PLAYER");
+    jdbc.deleteTable(conn, "ASE_I3_MOVE");
+
+    try {
+      conn.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
 }
 
 

@@ -47,12 +47,17 @@ class PlayGame {
 
     // tic-tac-toe html
     app.get("/tictactoe.html", ctx -> {
+      if (gameBoard == null) {
+        gameBoard = new models.GameBoard();
+        gameBoard.reload();
+      }
       ctx.render("/public/tictactoe.html");
     });
 
     // New Game
     app.get("/newgame", ctx -> {
       gameBoard = new models.GameBoard();
+      gameBoard.clean();
       ctx.redirect("/tictactoe.html");
     });
 
@@ -65,19 +70,29 @@ class PlayGame {
         if (type != 'X' && type != 'O') {
           throw new BadRequestResponse(String.format("type '%c' is not supported", type));
         }
-
+        if (gameBoard == null) {
+          gameBoard = new models.GameBoard();
+          gameBoard.reload();
+        }
         Objects.requireNonNull(gameBoard);
         gameBoard.startGame(type);
         sendGameBoardToAllPlayers(gameBoard.toJson());
         ctx.result(gameBoard.toJson());
       } catch (NullPointerException e) {
         throw new BadRequestResponse("Game is not initialized!");
+      } catch (IllegalArgumentException e) {
+        throw new BadRequestResponse("Game has already started!");
       }
+
     });
 
     // Join Game
     app.get("/joingame", ctx -> {
       try {
+        if (gameBoard == null) {
+          gameBoard = new models.GameBoard();
+          gameBoard.reload();
+        }
         Objects.requireNonNull(gameBoard);
         gameBoard.joinGame();
         sendGameBoardToAllPlayers(gameBoard.toJson());
@@ -91,6 +106,10 @@ class PlayGame {
     // Takes a Move
     app.post("/move/:playId", ctx -> {
       try {
+        if (gameBoard == null) {
+          gameBoard = new models.GameBoard();
+          gameBoard.reload();
+        }
         Objects.requireNonNull(gameBoard);
         int playId = ctx.pathParam("playId", int.class).get();
         int moveX = ctx.formParam("x", int.class).get();
