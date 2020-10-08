@@ -73,6 +73,7 @@ public class DatabaseTest {
   @Test
   @Order(3)
   public void loadPlayer1Test() {
+    jdbc.addPlayerData(conn, new Player('X', 1));
     Player player = jdbc.loadPlayer1(conn);
     assertEquals(1, player.getId());
     assertEquals('X', player.getType());

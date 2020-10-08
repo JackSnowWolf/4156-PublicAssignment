@@ -205,7 +205,7 @@ public class GameTest {
      */
     @Test
     @Order(2)
-    public void startGameErrorTest() {
+    public void startGameReloadTest() {
 
       // save to database.
       Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
@@ -217,12 +217,12 @@ public class GameTest {
       HttpResponse response = Unirest.post("http://localhost:8080/startgame").body("type=X")
           .asString();
       // Game is not initialized. But the endpoint will reload game from database.
-      assertEquals(400, response.getStatus());
+      assertEquals(200, response.getStatus());
       String responseBody = (String) response.getBody();
-      assertFalse(response.isSuccess());
-      assertEquals("BadRequestResponse", responseBody);
+      assertTrue(response.isSuccess());
+      assertNotEquals("", responseBody);
 
-      System.out.println("Test Start Game Error When reloading");
+      System.out.println("Test Start Game  When reloading");
     }
 
     /**
@@ -441,8 +441,34 @@ public class GameTest {
       System.out.println("Test Start Game");
     }
 
+    /**
+     * This is a test case to evaluate the startgame endpoint.
+     */
     @Test
     @Order(3)
+    public void startGameTest3() {
+      // save data to database
+      Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+      Unirest.get("http://localhost:8080/joingame").asString();
+
+      // Create a POST request to make a move and get body.
+      Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+
+      // database should be cleaned.
+      assertNotNull(PlayGame.getGameBoard().getP1());
+      assertEquals('X', PlayGame.getGameBoard().getP1().getType());
+      assertNull(PlayGame.getGameBoard().getP2());
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+          assertEquals('\0', PlayGame.getGameBoard().getBoardState()[i][j]);
+        }
+      }
+
+      System.out.println("Test Start Game");
+    }
+
+    @Test
+    @Order(4)
     public void startGameInvalidTypeErrorTest() {
       // Create a POST request to make a move and get body.
       HttpResponse response = Unirest.post("http://localhost:8080/startgame").body("type=x")
@@ -457,8 +483,9 @@ public class GameTest {
       System.out.println("Test Start Game Invalid Type Error.");
     }
 
+
     @Test
-    @Order(4)
+    @Order(5)
     public void restoreAfterNewGame() {
       // game crashes.
       PlayGame.setGameBoard(null);

@@ -70,10 +70,10 @@ class PlayGame {
         if (type != 'X' && type != 'O') {
           throw new BadRequestResponse(String.format("type '%c' is not supported", type));
         }
-        if (gameBoard == null) {
-          gameBoard = new models.GameBoard();
-          gameBoard.reload();
-        }
+
+        gameBoard = new models.GameBoard();
+        gameBoard.clean();
+
         Objects.requireNonNull(gameBoard);
         gameBoard.startGame(type);
         sendGameBoardToAllPlayers(gameBoard.toJson());
