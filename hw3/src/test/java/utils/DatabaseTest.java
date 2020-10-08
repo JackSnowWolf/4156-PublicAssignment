@@ -21,7 +21,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 @TestMethodOrder(OrderAnnotation.class)
 public class DatabaseTest {
 
-  private static DatabaseJDBC jdbc;
+  private static Database jdbc;
   private static Connection conn;
   private static String playerTableName = "ASE_I3_PLAYER";
   private static String moveTableName = "ASE_I3_MOVE";
@@ -32,7 +32,7 @@ public class DatabaseTest {
   @Test
   @BeforeAll
   public static void init() {
-    jdbc = new DatabaseJDBC();
+    jdbc = new Database();
     // get connection to database
     conn = jdbc.createConnection();
     assertNotNull(conn);
@@ -99,6 +99,7 @@ public class DatabaseTest {
   @Test
   @Order(4)
   public void loadBoardStateTest() {
+    jdbc.addMoveData(conn, new Move(new Player('O', 2), 0, 0));
     jdbc.addMoveData(conn, new Move(new Player('X', 1), 1, 1));
     int[][] boardState = jdbc.loadBoardState(conn);
     assertEquals(2, boardState[0][0]);

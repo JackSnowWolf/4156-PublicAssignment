@@ -3,7 +3,7 @@ package models;
 import com.google.gson.Gson;
 import java.sql.Connection;
 import java.sql.SQLException;
-import utils.DatabaseJDBC;
+import utils.Database;
 
 
 public class GameBoard {
@@ -34,7 +34,7 @@ public class GameBoard {
     boardState = new char[3][3];
 
     // connect to database.
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
     Connection conn = jdbc.createConnection();
     // initialize database.
     jdbc.createPlayerTable(conn, "ASE_I3_PLAYER");
@@ -56,7 +56,7 @@ public class GameBoard {
     this.p1 = p1;
 
     // save to database.
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
     Connection conn = jdbc.createConnection();
     jdbc.addPlayerData(conn, p1);
     try {
@@ -76,7 +76,7 @@ public class GameBoard {
     this.p2 = p2;
 
     // save to database.
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
     Connection conn = jdbc.createConnection();
     jdbc.addPlayerData(conn, p2);
     try {
@@ -209,7 +209,7 @@ public class GameBoard {
     p1 = new Player(type, 1);
 
     // save to database.
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
     Connection conn = jdbc.createConnection();
     jdbc.addPlayerData(conn, p1);
     try {
@@ -228,7 +228,7 @@ public class GameBoard {
     turn = 1;
 
     // save to database.
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
     Connection conn = jdbc.createConnection();
     jdbc.addPlayerData(conn, p2);
     try {
@@ -316,7 +316,7 @@ public class GameBoard {
     checkWinner();
 
     // save to database.
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
     Connection conn = jdbc.createConnection();
     jdbc.addMoveData(conn, move);
     try {
@@ -377,7 +377,7 @@ public class GameBoard {
    * reload game board from database.
    */
   public void reload() {
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
     Connection conn = jdbc.createConnection();
     p1 = jdbc.loadPlayer1(conn);
     p2 = jdbc.loadPlayer2(conn);
@@ -422,7 +422,7 @@ public class GameBoard {
    * clean database.
    */
   public void clean() {
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
     Connection conn = jdbc.createConnection();
     // clean data.
     jdbc.deleteTable(conn, "ASE_I3_PLAYER");

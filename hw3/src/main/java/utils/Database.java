@@ -8,10 +8,15 @@ import java.sql.Statement;
 import models.Move;
 import models.Player;
 
-public class DatabaseJDBC {
+public class Database {
 
+  /**
+   * initialize main function for jdbc.
+   *
+   * @param args null.
+   */
   public static void main(String[] args) {
-    DatabaseJDBC jdbc = new DatabaseJDBC();
+    Database jdbc = new Database();
 
     Connection conn = jdbc.createConnection();
     boolean tableCreated = jdbc.createPlayerTable(conn, "ASE_I3_PLAYER");
@@ -45,7 +50,7 @@ public class DatabaseJDBC {
       c = DriverManager.getConnection("jdbc:sqlite:ase.db");
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
-      System.exit(0);
+      return null;
     }
     System.out.println("Opened database successfully");
 
@@ -74,6 +79,14 @@ public class DatabaseJDBC {
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return false;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+      } catch (Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      }
     }
 
     System.out.println("Player Table Created Successfully");
@@ -101,6 +114,14 @@ public class DatabaseJDBC {
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return false;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+      } catch (Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      }
     }
 
     System.out.println("Move Table Create Successfully");
@@ -129,6 +150,14 @@ public class DatabaseJDBC {
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return false;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+      } catch (Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      }
     }
     System.out.println("Records created successfully");
     return true;
@@ -157,6 +186,14 @@ public class DatabaseJDBC {
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return false;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+      } catch (Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      }
     }
     System.out.println("Records created successfully");
     return true;
@@ -182,6 +219,14 @@ public class DatabaseJDBC {
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return false;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+      } catch (Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      }
     }
     System.out.println("Records deleted successfully");
     return true;
@@ -196,11 +241,12 @@ public class DatabaseJDBC {
   public int[][] loadBoardState(Connection c) {
     int[][] boardState = new int[3][3];
     Statement stmt = null;
+    ResultSet resultSet = null;
     try {
       c.setAutoCommit(false);
       stmt = c.createStatement();
       String sql = "SELECT * FROM ASE_I3_MOVE";
-      ResultSet resultSet = stmt.executeQuery(sql);
+      resultSet = stmt.executeQuery(sql);
 
       while (resultSet.next()) {
         int playerId = resultSet.getInt("PLAYER_ID");
@@ -215,6 +261,17 @@ public class DatabaseJDBC {
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return boardState;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+        if (resultSet != null) {
+          resultSet.close();
+        }
+      } catch (Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      }
     }
     System.out.println("Records loaded successfully");
     return boardState;
@@ -228,12 +285,13 @@ public class DatabaseJDBC {
    */
   public Player loadPlayer1(Connection c) {
     Statement stmt = null;
+    ResultSet resultSet = null;
     Player player = null;
     try {
       c.setAutoCommit(false);
       stmt = c.createStatement();
       String sql = "SELECT * FROM ASE_I3_PLAYER WHERE PLAYER_ID=1;";
-      ResultSet resultSet = stmt.executeQuery(sql);
+      resultSet = stmt.executeQuery(sql);
       if (!resultSet.next()) {
         System.out.println("Player is not initialized");
         return player;
@@ -243,6 +301,17 @@ public class DatabaseJDBC {
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return player;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+        if (resultSet != null) {
+          resultSet.close();
+        }
+      } catch (Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      }
     }
     System.out.println("Player loaded successfully");
     return player;
@@ -257,11 +326,12 @@ public class DatabaseJDBC {
   public Player loadPlayer2(Connection c) {
     Statement stmt = null;
     Player player = null;
+    ResultSet resultSet = null;
     try {
       c.setAutoCommit(false);
       stmt = c.createStatement();
       String sql = "SELECT * FROM ASE_I3_PLAYER WHERE PLAYER_ID=2;";
-      ResultSet resultSet = stmt.executeQuery(sql);
+      resultSet = stmt.executeQuery(sql);
       if (!resultSet.next()) {
         System.out.println("Player is not initialized");
         return player;
@@ -271,6 +341,17 @@ public class DatabaseJDBC {
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return player;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+        if (resultSet != null) {
+          resultSet.close();
+        }
+      } catch (Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      }
     }
     System.out.println("Player loaded successfully");
     return player;
